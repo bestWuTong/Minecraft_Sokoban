@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="我的世界风格的推箱子游戏，结合经典玩法与像素艺术设计，带来独特的益智体验。">
+    <meta name="description" content="Minecraft: Sokoban - A puzzle game inspired by Minecraft aesthetics.">
+    <title>我的世界：推箱子</title>
+    <link rel="icon" href="img/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* 核心配色方案 */
+            --mc-bg-overlay: rgba(0, 0, 0, 0.65);
+            --mc-btn-grey: #D0D0D0;
+            --mc-btn-shadow: #373737;
+            --mc-btn-highlight: #FFFFFF;
+            --mc-green: #588134; /* 草方块顶部的绿 */
+            --mc-blue: #3C85C7;  /* 钻石/水流蓝 */
+            --mc-dirt: #191206;  /* 深色泥土背景 */
+            --text-color: #FFFFFF;
+            --font-pixel: 'VT323', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-pixel);
+            background-color: var(--mc-dirt);
+            /* 模拟Minecraft泥土背景纹理（CSS生成） 
+            background-image: 
+                linear-gradient(45deg, #2A1D0D 25%, transparent 25%, transparent 75%, #2A1D0D 75%, #2A1D0D),
+                linear-gradient(45deg, #2A1D0D 25%, transparent 25%, transparent 75%, #2A1D0D 75%, #2A1D0D);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;*/
+            background-image: url('img/background.png');
+            background-size: 800px auto;
+            background-repeat: initial;
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 顶部导航栏 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(0, 0, 0, 0.5);
+            border-bottom: 4px solid #1a1a1a;
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* Logo图片样式 */
+        .logo-img {
+            width: auto;
+            height: 64px;
+            /* 保持像素清晰度，不模糊 */
+            image-rendering: pixelated; 
+        }
+
+        .site-title {
+            font-size: 4rem;
+            text-shadow: 4px 4px 0px #000;
+            color: #F8F8F8;
+            letter-spacing: 2px;
+        }
+
+        /* 返回主页的小按钮 */
+        .back-home-btn {
+            text-decoration: none;
+            color: #fff;
+            font-size: 1.2rem;
+            padding: 8px 16px;
+            background: #555;
+            border: 4px solid;
+            border-color: #fff #000 #000 #fff; /* 模拟立体高光和阴影 */
+            transition: all 0.1s;
+        }
+
+        .back-home-btn:hover {
+            background: #666;
+            color: #ffffaa; /* MC经典的悬停黄色字 */
+        }
+
+        .back-home-btn:active {
+            border-color: #000 #fff #fff #000; /* 点击凹陷效果 */
+        }
+
+        /* 主要内容区域 */
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 中心的面板 */
+        .panel {
+            background-color: #C6C6C6; /* MC GUI 背景灰 */
+            border: 4px solid #000;
+            padding: 10px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 10px 10px 0px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        /* 面板内边框细节 */
+        .panel-inner {
+            border: 4px solid;
+            border-color: #fff #555 #555 #fff;
+            padding: 40px 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .game-intro h1 {
+            color: #3f3f3f;
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 0px rgba(0,0,0,0.2);
+            /* MC Logo 风格字体颜色 */
+            background: linear-gradient(to bottom, #7e7e7e, #474747);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            /* 如果不支持上面的渐变，回退颜色 */
+            color: #444; 
+        }
+        
+        /* 针对不支持text-fill-color的备用方案 */
+        @supports not (-webkit-background-clip: text) {
+            .game-intro h1 {
+                background: none;
+                color: #333;
+            }
+        }
+
+        .game-intro p {
+            color: #404040;
+            font-size: 1.5rem;
+        }
+
+        /* 按钮容器 */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        /* 核心大按钮样式 */
+        .mc-button {
+            display: block;
+            width: 100%;
+            padding: 15px 0;
+            text-decoration: none;
+            font-size: 1.8rem;
+            text-align: center;
+            background-color: #787878;
+            color: #E0E0E0;
+            text-shadow: 2px 2px #000;
+            border: 4px solid;
+            border-color: #000; /* 外黑框 */
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        /* 按钮内部的高光边框模拟 */
+        .mc-button::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border: 4px solid;
+            border-color: var(--mc-btn-highlight) var(--mc-btn-shadow) var(--mc-btn-shadow) var(--mc-btn-highlight);
+            pointer-events: none;
+        }
+
+        /* 悬停状态 */
+        .mc-button:hover {
+            background-color: #8b8b8b;
+            color: #ffffa0; /* 悬停变黄 */
+        }
+        
+        .mc-button:hover::after {
+            border-color: #fff #484848 #484848 #fff;
+        }
+
+        /* 按钮颜色变种 */
+        .btn-download {
+            background-color: var(--mc-green); /* 绿色按钮 */
+        }
+        .btn-download:hover {
+            background-color: #6a9c3d;
+        }
+
+        .btn-github {
+            background-color: var(--mc-blue); /* 蓝色按钮 */
+        }
+        .btn-github:hover {
+            background-color: #559add;
+        }
+
+        /* 点击效果 */
+        .mc-button:active {
+            transform: translateY(4px);
+            box-shadow: inset 0px 4px 10px rgba(0,0,0,0.5);
+        }
+        .mc-button:active::after {
+            border-color: var(--mc-btn-shadow) var(--mc-btn-highlight) var(--mc-btn-highlight) var(--mc-btn-shadow);
+        }
+
+        /* 底部版权 */
+        footer {
+            text-align: center;
+            padding: 15px;
+            font-size: 1rem;
+            color: #aaa;
+            text-shadow: 2px 2px #000;
+        }
+
+        /* 响应式调整 */
+        @media (min-width: 768px) {
+            .action-buttons {
+                flex-direction: row;
+            }
+            .site-title {
+                display: block;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .site-title {
+                display: none; /* 手机上隐藏标题以节省空间 */
+            }
+            .logo-area {
+                gap: 10px;
+            }
+            .game-intro h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-area">
+            <img src="img/icon.png" alt="Game Logo" class="logo-img">
+            <span class="site-title">Minecraft:Sokoban</span>
+        </div>
+        
+        <a href="http://www.bestwutong.top" class="back-home-btn" target="_blank">
+            &lt; 返回無同的小屋
+        </a>
+    </header>
+
+    <main>
+        <div class="panel">
+            <div class="panel-inner">
+                <div class="game-intro">
+                    <img src="img/logo.png" style="max-height: 128px; margin-bottom: 30px;">
+                    <p>像素与智慧的碰撞 · 还原经典玩法</p>
+                </div>
+
+                <div class="action-buttons">
+                    <a href="https://rslamp.lanzouw.com/b0j12cugb" class="mc-button btn-download" target="_blank">
+                        [ 下载(密码:mc) ]
+                    </a>
+
+                    <a href="https://github.com/bestWuTong/Minecraft_Sokoban" class="mc-button btn-github" target="_blank">
+                        [ GitHub 仓库 ]
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025-∞ WuTong. Crafted with blocks.</p>
+    </footer>
+
+</body>
+</html>
